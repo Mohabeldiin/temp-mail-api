@@ -1,11 +1,14 @@
 import json
 import logging
-
 import requests
 
 
 class __Email(object):
-    """Super Class for the TempMail Class"""
+    """Super Class for the TempMail Class
+    Attributes:
+        email: str of email as Mail@Domain
+        Mail: str of Mail
+        Domain: str of Domain"""
 
     def __init__(self):
         """Request for new email
@@ -15,16 +18,28 @@ class __Email(object):
             Domain: str of Domain"""
         super().__init__()
         logging.basicConfig(
-            format='%(name)s - %(levelname)s: %(message)s', level=logging.DEBUG)
-        self._logger = logging.getLogger("TempMail")
+            format='%(name)s - %(levelname)s: %(message)s', level=logging.WARNING)
+        self._logger = logging.getLogger("TempMailAPI")
+        self._logger.info("Initializing TempMail")
         self._api = "https://www.1secmail.com/api/v1/?"
+        self._email, self._mail, self._domain = self._creat_new_email()
+        self._logger.info(f"TempMail initialized with : {self._email}")
+
+    def _creat_new_email(self):
+        """Request for new email
+        Return:
+            email: str of email as Mail@Domain
+            Mail: str of Mail
+            Domain: str of Domain"""
+        self._logger.info(f"Creating new email")
         action = "genRandomMailbox"
         count = 1
         new_mail_request = f"{self._api}action={action}&count={count}"
         new_mail_response = self._request_handler(new_mail_request)
-        self._email = self.__extract_email(new_mail_response)
-        self._mail, self._domain = self._email.split("@")
-        self._logger.info(f"Super TempMailAPI initialized with {self._email}")
+        email = self.__extract_email(new_mail_response)
+        mail, domain = email.split("@")
+        self._logger.info(f"New email created: {email}")
+        return email, mail, domain
 
     def __extract_email(self, response):
         """Extracting the email from the response
@@ -102,18 +117,25 @@ class __Email(object):
 
 
 class TempMail(__Email):
-    """foo"""
+    """TempMail API
+    https://www.1secmail.com/api/v1/
+    Attributes:
+        email: str of email as Mail@Domain
+        Mail: str of Mail
+        Domain: str of Domain
 
-    # constructor for test purposes
-    def __init__(self, test=True):
-        """Initialize Temporary Mail"""
-        super().__init__()
-        if test:
-            self._logger.info("Test mode activated")
+    Methods:
+        get_mail(): str of Mail
+        get_domain(): str of Domain
+        get_email(): str of email as Mail@Domain
+        get_message(): str of message
+        get_subject(): str of subject
+        receive_mail(): dict of mail"""
 
     def __init__(self):
         """Initialize Temporary Mail"""
         super().__init__()
+        self._logger.info("Initializing TempMail")
 
     def __json_handler(self, data):
         """Handling the json data
@@ -131,7 +153,7 @@ class TempMail(__Email):
     def __data_handler(self, data, attribute: str):
         """Handling the data extraction"""
         try:
-            return data[0][attribute]
+            return data[0][attribute].strip()
         except:
             try:
                 return data[attribute]
@@ -192,7 +214,7 @@ class TempMail(__Email):
             body: str of body"""
         message = self.__last_received_message()
         self._logger.debug(f"Returning last received body.")
-        return self.__data_handler(message, "body")
+        return str(self.__data_handler(message, "textBody"))
 
     def get_subject(self):
         """Gets the last received subject
@@ -202,7 +224,7 @@ class TempMail(__Email):
             f"Returning subject: {self.__last_received_subject()}")
         return self.__last_received_subject()
 
-    def get_body(self):
+    def get_message(self):
         """Gets the last received body
         Return:
             body: str of body"""
@@ -215,7 +237,7 @@ class TempMail(__Email):
         body = self.__last_received_body()
         received_mail = {
             "subject": subject,
-            "body": body
+            "body": str(body)
         }
         self._logger.info(f"Returning received mail: {received_mail}")
         return received_mail
@@ -223,9 +245,9 @@ class TempMail(__Email):
 
 if __name__ == '__main__':
     tm = TempMail()
+    print(tm.get_email())
     print(tm.get_mail())
     print(tm.get_domain())
-    print(tm.get_email())
     print(tm.get_subject())
-    print(tm.get_body())
+    print(tm.get_message())
     print(tm.receive_mail())
